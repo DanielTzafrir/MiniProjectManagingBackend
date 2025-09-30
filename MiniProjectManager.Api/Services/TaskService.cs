@@ -7,58 +7,75 @@ namespace MiniProjectManager.Services;
 
 public class TaskService : ITaskService
 {
-    private readonly ITaskRepository _taskRepository;
+    private readonly ITaskRepository _repository;
     private readonly IProjectRepository _projectRepository;
     private readonly IMapper _mapper;
 
-    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository, IMapper mapper)
+    public TaskService(ITaskRepository repository, IProjectRepository projectRepository, IMapper mapper)
     {
-        _taskRepository = taskRepository;
+        _repository = repository;
         _projectRepository = projectRepository;
         _mapper = mapper;
     }
 
+    public async Task<TaskDto> GetByIdAsync(int id, int userId)
+    {
+        var task = await GetTaskIfOwned(id, userId);
+        return _mapper.Map<TaskDto>(task);
+    }
+
     public async Task<TaskDto> CreateAsync(int projectId, TaskCreateDto dto, int userId)
-    {
-        var project = await GetProjectIfOwned(projectId, userId);
-        var task = _mapper.Map<TaskItem>(dto);
-        task.ProjectId = projectId;
-        await _taskRepository.AddAsync(task);
-        return _mapper.Map<TaskDto>(task);
-    }
-
-    public async Task<TaskDto> UpdateAsync(int taskId, TaskUpdateDto dto, int userId)
-    {
-        var task = await GetTaskIfOwned(taskId, userId);
-        _mapper.Map(dto, task);
-        await _taskRepository.UpdateAsync(task);
-        return _mapper.Map<TaskDto>(task);
-    }
-
-    public async Task DeleteAsync(int taskId, int userId)
-    {
-        var task = await GetTaskIfOwned(taskId, userId);
-        await _taskRepository.DeleteAsync(task);
-    }
-
-    private async Task<Project> GetProjectIfOwned(int projectId, int userId)
     {
         var project = await _projectRepository.GetByIdAsync(projectId);
         if (project == null || project.UserId != userId)
         {
             throw new KeyNotFoundException("Project not found or not owned");
         }
-        return project;
+
+        var task = _mapper.Map<TaskItem>(dto);
+        task.ProjectId = projectId;
+        await _repository.AddAsync(task);
+        return _mapper.Map<TaskDto>(task);
     }
 
-    private async Task<TaskItem> GetTaskIfOwned(int taskId, int userId)
+    public async Task<TaskDto> UpdateAsync(int id, TaskUpdateDto dto, int userId)
     {
-        var task = await _taskRepository.GetByIdAsync(taskId);
+        var task = await GetTaskIfOwned(id, userId);
+
+        if (dto.Title != null)
+        {
+            task.Title = dto.Title;
+        }
+        if (dto.DueDate != null)
+        {
+            task.DueDate = dto.DueDate;
+        }
+        task.IsCompleted = dto.IsCompleted;  
+
+        await _repository.UpdateAsync(task);
+        return _mapper.Map<TaskDto>(task);
+    }
+
+    public async Task DeleteAsync(int id, int userId)
+    {
+        var task = await GetTaskIfOwned(id, userId);
+        await _repository.DeleteAsync(task);
+    }
+
+    private async Task<TaskItem> GetTaskIfOwned(int id, int userId)
+    {
+        var task = await _repository.GetByIdAsync(id);
         if (task == null)
         {
             throw new KeyNotFoundException("Task not found");
         }
-        var project = await GetProjectIfOwned(task.ProjectId, userId);
+
+        var project = await _projectRepository.GetByIdAsync(task.ProjectId);
+        if (project == null || project.UserId != userId)
+        {
+            throw new UnauthorizedAccessException("Task not owned");
+        }
+
         return task;
     }
 }
