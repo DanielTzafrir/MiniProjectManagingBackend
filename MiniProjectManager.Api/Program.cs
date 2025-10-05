@@ -63,19 +63,17 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        if (builder.Environment.IsDevelopment())
-        {
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-        }
-        else
-        {
-            policy.WithOrigins("https://miniprojectmanagingbackend-1.onrender.com")
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        }
+        var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',') ??
+            (builder.Environment.IsDevelopment()
+                ? new[] { "*" }  // Any for dev
+                : new[] { "https://your-frontend.onrender.com" });  // Placeholder; update to actual
+
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();  // If needed for auth
     });
 });
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -93,8 +91,8 @@ app.MapControllers();
 
 if (app.Environment.IsProduction())
 {
-    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-    app.Urls.Add($"http://*:{port}");
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+    app.Urls.Add($"http://0.0.0.0:{port}");
 }
 
 using (var scope = app.Services.CreateScope())
