@@ -25,20 +25,20 @@ public class AuthService : IAuthService
     }
 
     public async Task<string> RegisterAsync(RegisterDto dto)
+{
+    if (string.IsNullOrEmpty(dto.username) || string.IsNullOrEmpty(dto.email) || string.IsNullOrEmpty(dto.password))
     {
-        if (string.IsNullOrEmpty(dto.Username) || string.IsNullOrEmpty(dto.Email) || string.IsNullOrEmpty(dto.Password))
-        {
-            throw new ArgumentException("Invalid registration data");
-        }
-
-        var user = _mapper.Map<User>(dto);
-        var result = await _userRepository.CreateAsync(user, dto.Password);
-        if (!result.Succeeded)
-        {
-            throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
-        }
-        return GenerateJwtToken(user);
+        throw new ArgumentException("Invalid registration data");
     }
+
+    var user = _mapper.Map<User>(dto);
+    var result = await _userRepository.CreateAsync(user, dto.password);
+    if (!result.Succeeded)
+    {
+        throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+    }
+    return GenerateJwtToken(user);
+}
 
     public async Task<string> LoginAsync(LoginDto dto)
     {
