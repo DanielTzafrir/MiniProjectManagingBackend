@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using MiniProjectManager.Data.Repositories;
 using MiniProjectManager.Domain.Entities;
 using MiniProjectManager.Dtos.Auth;
+using Microsoft.Extensions.Configuration;
 
 namespace MiniProjectManager.Services;
 
@@ -25,6 +26,11 @@ public class AuthService : IAuthService
 
     public async Task<string> RegisterAsync(RegisterDto dto)
     {
+        if (string.IsNullOrEmpty(dto.Username) || string.IsNullOrEmpty(dto.Email) || string.IsNullOrEmpty(dto.Password))
+        {
+            throw new ArgumentException("Invalid registration data");
+        }
+
         var user = _mapper.Map<User>(dto);
         var result = await _userRepository.CreateAsync(user, dto.Password);
         if (!result.Succeeded)
@@ -56,8 +62,11 @@ public class AuthService : IAuthService
 
     private string GenerateJwtToken(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var keyString = _configuration["Jwt:Key"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
+        if (string.IsNullOrEmpty(keyString) || Encoding.UTF8.GetBytes(keyString).Length < 16)
+        {
+            throw new InvalidOperationException("JWT key is invalid or too short");
+        }
 
         var claims = new[]
         {
@@ -65,13 +74,15 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.Name, user.UserName)
         };
 
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
         var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"],
-            audience: _config["Jwt:Audience"],
+            issuer: _configuration["Jwt:Issuer"] ?? Environment.GetEnvironmentVariable("JWT_ISSUER"),
+            audience: _configuration["Jwt:Audience"] ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
-            signingCredentials: creds
-        );
+            expires: DateTime.Now.AddHours(1),
+            signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
