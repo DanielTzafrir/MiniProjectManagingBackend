@@ -25,21 +25,20 @@ public class AuthService : IAuthService
     }
 
     public async Task<string> RegisterAsync(RegisterDto dto)
-{
-    if (string.IsNullOrEmpty(dto.username) || string.IsNullOrEmpty(dto.email) || string.IsNullOrEmpty(dto.password))
     {
-        throw new ArgumentException("Invalid registration data");
-    }
+        if (string.IsNullOrEmpty(dto.Username) || string.IsNullOrEmpty(dto.Email) || string.IsNullOrEmpty(dto.Password))
+        {
+            throw new ArgumentException("Invalid registration data");
+        }
 
-    var user = _mapper.Map<User>(dto);
-    var result = await _userRepository.CreateAsync(user, dto.password);
-    if (!result.Succeeded)
-    {
-        throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+        var user = _mapper.Map<User>(dto);
+        var result = await _userRepository.CreateAsync(user, dto.Password);
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+        return GenerateJwtToken(user);
     }
-    return GenerateJwtToken(user);
-}
-
     public async Task<string> LoginAsync(LoginDto dto)
     {
         var user = await _userRepository.FindByUserNameAsync(dto.UserName);
@@ -62,7 +61,7 @@ public class AuthService : IAuthService
 
     private string GenerateJwtToken(User user)
     {
-        var keyString = _configuration["Jwt:Key"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
+        var keyString = _config["Jwt:Key"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
         if (string.IsNullOrEmpty(keyString) || Encoding.UTF8.GetBytes(keyString).Length < 16)
         {
             throw new InvalidOperationException("JWT key is invalid or too short");
@@ -78,8 +77,8 @@ public class AuthService : IAuthService
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"] ?? Environment.GetEnvironmentVariable("JWT_ISSUER"),
-            audience: _configuration["Jwt:Audience"] ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
+            issuer: _config["Jwt:Issuer"] ?? Environment.GetEnvironmentVariable("JWT_ISSUER"),
+            audience: _config["Jwt:Audience"] ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
             claims: claims,
             expires: DateTime.Now.AddHours(1),
             signingCredentials: creds);
