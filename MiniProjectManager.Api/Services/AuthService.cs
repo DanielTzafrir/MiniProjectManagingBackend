@@ -8,6 +8,7 @@ using MiniProjectManager.Data.Repositories;
 using MiniProjectManager.Domain.Entities;
 using MiniProjectManager.Dtos.Auth;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace MiniProjectManager.Services;
 
@@ -62,6 +63,8 @@ public class AuthService : IAuthService
     private string GenerateJwtToken(User user)
     {
         var keyString = _config["Jwt:Key"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
+        _logger.LogDebug("JWT KeyString value: {KeyStringLength} chars", keyString?.Length ?? 0);  // Log length only for security
+
         if (string.IsNullOrEmpty(keyString) || Encoding.UTF8.GetBytes(keyString).Length < 16)
         {
             throw new InvalidOperationException("JWT key is invalid or too short");
