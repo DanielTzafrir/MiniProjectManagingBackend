@@ -17,12 +17,13 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
     private readonly IConfiguration _config;
-
-    public AuthService(IUserRepository userRepository, IMapper mapper, IConfiguration config)
+    private readonly ILogger<AuthService> _logger;
+    public AuthService(IUserRepository userRepository, IMapper mapper, IConfiguration config, ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
         _mapper = mapper;
         _config = config;
+        _logger = logger;
     }
 
     public async Task<string> RegisterAsync(RegisterDto dto)
