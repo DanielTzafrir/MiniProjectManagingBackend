@@ -73,13 +73,13 @@ builder.Services.AddCors(options =>
     {
         var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',') ??
             (builder.Environment.IsDevelopment()
-                ? new[] { "*" }  // Any for dev
-                : new[] { "https://your-frontend.onrender.com" });  // Placeholder; update to actual
+                ? new[] { "*" }
+                : new[] { "https://miniprojectmanagingfrontend.onrender.com" });
 
         policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();  // If needed for auth
+              .AllowCredentials();
     });
 });
 var app = builder.Build();
