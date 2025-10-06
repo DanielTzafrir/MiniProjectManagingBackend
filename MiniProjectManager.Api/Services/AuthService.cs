@@ -26,7 +26,7 @@ public class AuthService : IAuthService
 
     public async Task<string> RegisterAsync(RegisterDto dto)
     {
-        if (string.IsNullOrEmpty(dto.Username) || string.IsNullOrEmpty(dto.Email) || string.IsNullOrEmpty(dto.Password))
+        if (string.IsNullOrEmpty(dto.UserName) || string.IsNullOrEmpty(dto.Email) || string.IsNullOrEmpty(dto.Password))
         {
             throw new ArgumentException("Invalid registration data");
         }
