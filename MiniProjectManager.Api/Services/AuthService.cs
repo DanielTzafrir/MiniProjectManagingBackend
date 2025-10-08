@@ -9,7 +9,6 @@ using MiniProjectManager.Domain.Entities;
 using MiniProjectManager.Dtos.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System;
 
 namespace MiniProjectManager.Services;
 
@@ -69,7 +68,7 @@ public class AuthService : IAuthService
 
         if (string.IsNullOrEmpty(keyString) || Encoding.UTF8.GetBytes(keyString).Length < 16)
         {
-            console.log(keyString);
+            System.console.WriteLine(keyString);
             throw new InvalidOperationException("JWT key is invalid or too short");
         }
 
