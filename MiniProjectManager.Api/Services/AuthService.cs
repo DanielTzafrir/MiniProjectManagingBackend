@@ -68,7 +68,7 @@ public class AuthService : IAuthService
 
         if (string.IsNullOrEmpty(keyString) || Encoding.UTF8.GetBytes(keyString).Length < 16)
         {
-            System.console.WriteLine(keyString);
+            System.Console.WriteLine(keyString);
             throw new InvalidOperationException("JWT key is invalid or too short");
         }
 
